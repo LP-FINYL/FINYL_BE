@@ -5,8 +5,10 @@ const compression = require('compression')
 const helmet = require('helmet')
 const app = express()
 const session = require('express-session')
+var cors = require('cors')
 
 app.use(helmet())
+app.use(cors())
 app.use(express.static('public'))
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))

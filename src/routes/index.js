@@ -7,19 +7,19 @@ const stores = db.collection('store'); // collection
 const shortid = require('shortid');
 
 
-router.get('/', function (request, response) {
-    var feedback = '';
-    var title = 'Welcome';
-    var description = 'Hello, Node.js';
-    var html = template.html(title,
-        `
-      <div style="color:green">${feedback}</div>
-      <h2>${title}</h2>${description}
-      `,
-        ``
-    );
-    response.send(html);
-});
+// router.get('/', function (request, response) {
+//     var feedback = '';
+//     var title = 'Welcome';
+//     var description = 'Hello, Node.js';
+//     var html = template.html(title,
+//         `
+//       <div style="color:green">${feedback}</div>
+//       <h2>${title}</h2>${description}
+//       `,
+//         ``
+//     );
+//     response.send(html);
+// });
 
 async function locationQuery(callback) {
     try {
