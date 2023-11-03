@@ -34,6 +34,7 @@ async function locationQuery(callback) {
         console.log(err);
         return callback(err, null);
     }
+    client.close()
 }
 
 
@@ -87,6 +88,7 @@ async function storeInfoQuery(id, callback) {
         console.error(err);
         callback(err, null);
     }
+    client.close()
 }
 
 
@@ -134,7 +136,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
         console.error(`데이터 저장 실패 ${err}\n`);
         return callback(err, null)
     }
-
+    client.close()
 }
 
 
@@ -201,6 +203,7 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
         console.error(`데이터 업데이트 실패 ${err}\n`);
         return callback(err, null);
     }
+    client.close()
 }
 
 router.post('/admin_update', function (req, res) {
@@ -247,6 +250,7 @@ async function deleteData(id, callback) {
     } catch (err) {
         console.log("Delete Failed", err)
     }
+    client.close()
 }
 
 
@@ -261,7 +265,8 @@ router.post('/admin_delete', (request, response) => {
     if (connectDB) {
         console.log('회원 정보 삭제');
         deleteData(id);
-        response.redirect('/')
+        response.send()
+
     }
 })
 
