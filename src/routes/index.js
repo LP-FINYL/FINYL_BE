@@ -167,10 +167,103 @@ router.post('/admin', function (req, res) {
     } else {
         console.log('데이터베이스 연결 안됨.');
     }
-
-
 });
 
+
+async function updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, callback) {
+    try {
+        const filter = {id: id};
+        console.log(id)
+        const updateDoc = {
+            $set: {
+                title: title,
+                tags: tags,
+                address: address,
+                site: site,
+                instaUrl: instaUrl,
+                operatorTime: operatorTime,
+                phone: Number(phone),
+                latitude: Number(latitude),
+                longitude: Number(longitude),
+                image: image,
+                info: info
+            }
+        };
+
+            const updateResult = stores.findOneAndUpdate(
+                filter,
+                updateDoc
+            );
+            console.log(updateResult)
+            console.log(`데이터 업데이트 성공.\n`);
+            return callback(null, updateResult);
+        } catch (err) {
+        console.error(`데이터 업데이트 실패 ${err}\n`);
+        return callback(err, null);
+    }
+}
+
+router.post('/admin_update', function (req, res) {
+    const body = req.body;
+    console.log(req.body)
+    const id = req.body.id; // 기존 데이터의 ID를 받아옵니다.
+
+    // 나머지 데이터는 기존 데이터를 업데이트할 때 사용할 새로운 값들입니다.
+    const title = req.body.title;
+    const tags = req.body.tags;
+    const address = req.body.address;
+    const site = req.body.site;
+    const instaUrl = req.body.instaUrl;
+    const operatorTime = req.body.operatorTime;
+    const phone = req.body.phone;
+    const latitude = req.body.latitude;
+    const longitude = req.body.longitude;
+    const image = req.body.image;
+    const info = req.body.info;
+
+    if (connectDB) {
+        updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, (err, result) => {
+            if (err) {
+                console.log('가게정보 업데이트 실패');
+                res.send(err);
+            } else if (result) {
+                console.log('가게 정보 업데이트 성공');
+                res.send(result);
+            }
+        });
+    } else {
+        console.log('데이터베이스 연결 안됨.');
+    }
+});
+
+
+async function deleteData(id, callback) {
+
+    const deleteDoc = { id:id };
+
+    try {
+        const deleteManyResult = await stores.deleteMany(deleteDoc);
+        console.log("Delete OK :", deleteManyResult)
+    } catch (err) {
+        console.log("Delete Failed", err)
+    }
+}
+
+
+/* /drop post */
+router.post('/admin_delete', (request, response) => {
+
+    console.log('회원탈퇴할 ID : ' + id , "Get Delete Process");
+
+    var body = request.body;
+    var id = body.id;
+
+    if (connectDB) {
+        console.log('회원 정보 삭제');
+        deleteData(id);
+        response.redirect('/')
+    }
+})
 
 
 
