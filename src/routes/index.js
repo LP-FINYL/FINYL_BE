@@ -1,11 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var template = require('../lib/template.js');
-const {client, connectDB} = require('../controller/mongodb')
-const db = client.db("finyl"); // database
-const stores = db.collection('store'); // collection
+const {getClient} = require('../controller/mongodb')
 const shortid = require('shortid');
-
 
 // router.get('/', function (request, response) {
 //     var feedback = '';
@@ -21,20 +18,22 @@ const shortid = require('shortid');
 //     response.send(html);
 // });
 
+
 async function locationQuery(callback) {
     try {
+        const client = await getClient()
+        const db = client.db("finyl"); // database
+        const stores = db.collection('store'); // collection
         const coordinates = { id: 1, latitude: 1, longitude: 1 };
         const results = await stores
             .find()
             .project(coordinates)
             .toArray();
-
-            return callback(null, results);
+        return callback(null, results, client);
     } catch (err) {
         console.log(err);
         return callback(err, null);
     }
-    client.close()
 }
 
 
@@ -44,8 +43,8 @@ async function locationQuery(callback) {
 router.get('/location', function (req, res) {
 
 
-    if (connectDB) {
-        locationQuery((err, result) => {
+    if (getClient) {
+        locationQuery((err, result, connection) => {
             if (err) {
                 console.log('가게 위치 조회 실패');
                 res.send(err);
@@ -62,6 +61,11 @@ router.get('/location', function (req, res) {
 
 async function storeInfoQuery(id, callback) {
     try {
+
+        const client = await getClient()
+        const db = client.db("finyl"); // database
+        const stores = db.collection('store'); // collection
+
         const result = await stores.findOne({id: id});
 
         if (result) {
@@ -88,7 +92,6 @@ async function storeInfoQuery(id, callback) {
         console.error(err);
         callback(err, null);
     }
-    client.close()
 }
 
 
@@ -97,7 +100,7 @@ router.get('/storeInfo', function (req, res) {
 
     const id = req.query.id
 
-    if (connectDB) {
+    if (getClient) {
         storeInfoQuery(id,(err, result) => {
             if (err) {
                 console.log('가게 전체 데이터 조회 실패');
@@ -117,6 +120,10 @@ router.get('/storeInfo', function (req, res) {
 
 async function addStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, callback) {
     try {
+        const client = await getClient()
+        const db = client.db("finyl"); // database
+        const stores = db.collection('store'); // collection
+
         const storeData = stores.insertMany([{
             id: id,
             title: title,
@@ -136,7 +143,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
         console.error(`데이터 저장 실패 ${err}\n`);
         return callback(err, null)
     }
-    client.close()
+
 }
 
 
@@ -156,7 +163,7 @@ router.post('/admin', function (req, res) {
     const image = req.body.image
     const info = req.body.info
 
-    if (connectDB) {
+    if (getClient) {
         addStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, (err, result) => {
             if (err) {
                 console.log('가게정보 저장 실패');
@@ -174,8 +181,12 @@ router.post('/admin', function (req, res) {
 
 async function updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, callback) {
     try {
+        const client = await getClient()
+        const db = client.db("finyl"); // database
+        const stores = db.collection('store'); // collection
+
         const filter = {id: id};
-        console.log(id)
+
         const updateDoc = {
             $set: {
                 title: title,
@@ -203,7 +214,6 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
         console.error(`데이터 업데이트 실패 ${err}\n`);
         return callback(err, null);
     }
-    client.close()
 }
 
 router.post('/admin_update', function (req, res) {
@@ -224,7 +234,7 @@ router.post('/admin_update', function (req, res) {
     const image = req.body.image;
     const info = req.body.info;
 
-    if (connectDB) {
+    if (getClient) {
         updateStore(id, title, tags, address, site, instaUrl, operatorTime, phone, latitude, longitude, image, info, (err, result) => {
             if (err) {
                 console.log('가게정보 업데이트 실패');
@@ -242,31 +252,43 @@ router.post('/admin_update', function (req, res) {
 
 async function deleteData(id, callback) {
 
+    const client = await getClient()
+    const db = client.db("finyl"); // database
+    const stores = db.collection('store'); // collection
+
     const deleteDoc = { id:id };
 
     try {
         const deleteManyResult = await stores.deleteMany(deleteDoc);
         console.log("Delete OK :", deleteManyResult)
+        return callback(null, deleteManyResult)
     } catch (err) {
         console.log("Delete Failed", err)
+        return callback(err, null)
     }
-    client.close()
 }
 
 
 /* /drop post */
-router.post('/admin_delete', (request, response) => {
+router.post('/admin_delete', (req, res) => {
 
     console.log('회원탈퇴할 ID : ' + id , "Get Delete Process");
 
-    var body = request.body;
+    var body = req.body;
     var id = body.id;
 
-    if (connectDB) {
-        console.log('회원 정보 삭제');
-        deleteData(id);
-        response.send()
-
+    if (getClient) {
+        deleteData(id, (err, result) => {
+            if (err) {
+                console.log('가게 정보 삭제 실패');
+                res.send(err);
+            } else if (result) {
+                console.log('가게 정보 삭제 성공');
+                res.send(result);
+            }
+        });
+    } else {
+        console.log('데이터베이스 연결 안됨.');
     }
 })
 

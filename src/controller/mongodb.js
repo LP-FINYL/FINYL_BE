@@ -10,11 +10,16 @@ const client = new MongoClient(uri, {
     }
 });
 
+function getClient() {
+
+    let clientPromise
+    clientPromise = client.connect();
+    console.log("Database 연결 성공");
+
+    return  clientPromise
+}
 
 module.exports = {
     client,
-    connectDB: function() {
-        client.connect();
-        console.log("Database 연결 성공");
-    }
+    getClient
 }
