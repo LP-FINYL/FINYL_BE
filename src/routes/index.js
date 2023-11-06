@@ -16,7 +16,11 @@ const shortid = require('shortid');
 //         ``
 //     );
 //     response.send(html);
-// });
+// });가
+
+router.get('/', function (req, res) {
+    res.status(200)
+});
 
 
 async function locationQuery(callback) {
@@ -147,7 +151,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
 }
 
 
-router.post('/admin', function (req, res) {
+router.post('/adminCreate', function (req, res) {
 
     const body = req.body
     const id = shortid.generate()
@@ -216,7 +220,7 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
     }
 }
 
-router.post('/admin_update', function (req, res) {
+router.post('/adminUpdate', function (req, res) {
     const body = req.body;
     console.log(req.body)
     const id = req.body.id; // 기존 데이터의 ID를 받아옵니다.
@@ -270,7 +274,7 @@ async function deleteData(id, callback) {
 
 
 /* /drop post */
-router.post('/admin_delete', (req, res) => {
+router.post('/adminDelete', (req, res) => {
 
     console.log('회원탈퇴할 ID : ' + id , "Get Delete Process");
 

@@ -16,26 +16,24 @@ app.use(compression())
 
 const indexRouter = require('./routes/index')
 
-var FileStore = require('session-file-store')(session);
-
-app.use(session({
-    secret: 'secrets',
-    resave: false,
-    saveUninitialized: false,
-    cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) },
-    store: new FileStore()
-}));
+// var FileStore = require('session-file-store')(session);
+//
+// app.use(session({
+//     secret: 'secrets',
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) },
+//     store: new FileStore()
+// }));
 
 
 app.use('/api/v1', indexRouter)
 // app.use('/', indexRouter)
 
 
-//get 방식으로 오는 요청에 대해서만 파일 리스트를 가져오는거고 , POST는 처리되지않음
-app.get('*',function (req,res,next){
-    res.redirect('/api/v1')
-})
-
+app.get('/', function (req, res) {
+    res.status(200).send('OK')
+});
 
 
 app.use(function (req, res, next){
