@@ -6,6 +6,8 @@ const helmet = require('helmet')
 const app = express()
 const session = require('express-session')
 var cors = require('cors')
+const indexRouter = require('./routes/index')
+const adminRouter = require('./routes/admin')
 
 app.use(helmet())
 app.use(cors())
@@ -13,8 +15,6 @@ app.use(express.static('public'))
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(compression())
-
-const indexRouter = require('./routes/index')
 
 // var FileStore = require('session-file-store')(session);
 //
@@ -28,6 +28,7 @@ const indexRouter = require('./routes/index')
 
 
 app.use('/api/v1', indexRouter)
+app.use('/api/v1/admin', adminRouter)
 // app.use('/', indexRouter)
 
 
@@ -37,12 +38,14 @@ app.get('/', function (req, res) {
 
 
 app.use(function (req, res, next){
-    res.status(404).send('sorry')
+    res.status(404).send('server error')
 })
 
 app.use((err, req, res, next) => {
-    console.error(err.stack)
-    res.status(500).send('Something broke!')
+    res.status(500).json({
+        error: err,
+        message: 'Internal server error!',
+    })
 })
 
 
