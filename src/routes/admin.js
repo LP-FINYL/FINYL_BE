@@ -3,8 +3,9 @@ var router = express.Router();
 var template = require('../lib/template.js');
 const {getClient} = require('../controller/mongodb')
 const shortid = require('shortid');
-const {upload} = require("../controller/upload");
-
+const { upload } = require("../controller/upload");
+const {format} = require("util");
+const {Storage} = require("@google-cloud/storage");
 
 // router.get('/', function (request, response) {
 //     var feedback = '';
@@ -218,7 +219,7 @@ async function StoreEntireInfoQuery(callback) {
 
 
 
-// 요청 시 ID 기준으로 위도 경도 ID 값 전달
+// 요청 시 디비의 전체 데이터 전달
 router.get('/adminStoreEntireInfo', function (req, res) {
 
 
@@ -237,33 +238,58 @@ router.get('/adminStoreEntireInfo', function (req, res) {
     }
 });
 
-
-async function ImageUploader(callback) {
-    try {
-        const client = await getClient()
-        const db = client.db("finyl"); // database
-        const stores = await db.collection('store'); // collection
-        const results = await stores
-            .find({}).toArray()
-        return callback(null, results, client);
-    } catch (err) {
-        console.log(err);
-        return callback(err, null);
-    }
+function uuidv4() {
+    return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+        (
+            c ^
+            (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+        ).toString(16)
+    );
 }
 
-// 요청 시 ID 기준으로 위도 경도 ID 값 전달
-router.post('/imageUpload', function (req, res) {
-    try {
-        if (req.file) {
-            console.log("File found, trying to upload...");
-            const publicUrl = upload()
-            res.status(200).send(publicUrl);
-        } else throw "error with img";
-    } catch (err) {
-        res.status(500).send(err);
+
+// 이미지 업로드 기능
+router.post('/imageUpload', function (req, res, next) {
+
+
+    const {Storage} = require('@google-cloud/storage');
+    const storage = new Storage();
+    const bucket = storage.bucket('finyl');
+    const postid = uuidv4();
+
+    if (!req.file) {
+        res.status(400).send('No file uploaded.');
+        return;
     }
+
+    // Create a new blob in the bucket and upload the file data.
+    const blob = bucket.file(`finyl/${postid}.jpeg`);
+    const blobStream = blob.createWriteStream();
+
+    blobStream.on('error', err => {
+        next(err);
+    });
+
+    blobStream.on('finish', () => {
+        // The public URL can be used to directly access the file via HTTP.
+
+        blob.makePublic(async function (err) {
+            if (err) {
+                console.error(`Error making file public: ${err}`)
+                res.status(500).send(err)
+            } else {
+                console.log(`File ${blob.name} is now public.`)
+                const publicUrl = blob.publicUrl()
+                console.log(`Public URL for ${blob.name}: ${publicUrl}`)
+                res.status(200).send(publicUrl);
+            }
+        })
+
+    });
+
+    blobStream.end(req.file.buffer);
 });
+
 
 
 
