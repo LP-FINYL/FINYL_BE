@@ -38,6 +38,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
             tags: tags,
             address: address,
             site: site,
+            instaUrl: instaUrl,
             operatorTime: operatorTime,
             phone: Number(phone),
             latitude: Number(latitude),
@@ -202,13 +203,13 @@ router.post('/adminDelete', (req, res) => {
 })
 
 
-async function StoreEntireInfoQuery(callback) {
+async function StoreEntireInfoQuery(page, limit, callback) {
     try {
-        const client = await getClient()
+        const client = await getClient();
         const db = client.db("finyl"); // database
-        const stores = await db.collection('store'); // collection
-        const results = await stores
-            .find({}).toArray()
+        const stores = db.collection('store'); // collection
+        const cursor = stores.find({}).skip((page - 1) * limit).limit(limit);
+        const results = await cursor.toArray();
         return callback(null, results, client);
     } catch (err) {
         console.log(err);
@@ -219,12 +220,15 @@ async function StoreEntireInfoQuery(callback) {
 
 
 
+
 // 요청 시 디비의 전체 데이터 전달
 router.get('/adminStoreEntireInfo', function (req, res) {
 
 
     if (getClient) {
-        StoreEntireInfoQuery((err, result) => {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        StoreEntireInfoQuery(page, limit,(err, result) => {
             if (err) {
                 console.log('가게 전체 정보 조회 실패');
                 res.send(err);
@@ -280,8 +284,7 @@ router.post('/imageUpload', function (req, res, next) {
             } else {
                 console.log(`File ${blob.name} is now public.`)
                 const publicUrl = blob.publicUrl()
-                console.log(`Public URL for ${blob.name}: ${publicUrl}`)
-                res.status(200).send(publicUrl);
+                res.status(200).send({publicUrl : publicUrl});
             }
         })
 

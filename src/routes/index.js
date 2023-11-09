@@ -80,6 +80,7 @@ async function storeInfoQuery(id, callback) {
                 tags: result.tags,
                 address: result.address,
                 site: result.site,
+                instaUrl: result.instaUrl,
                 operatorTime: result.operatorTime,
                 phone: result.phone,
                 latitude: result.latitude,
