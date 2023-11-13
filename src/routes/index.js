@@ -23,17 +23,30 @@ router.get('/', function (req, res) {
 });
 
 
-async function locationQuery(callback) {
+async function locationQuery(keyword, callback) {
     try {
-        const client = await getClient()
-        const db = client.db("finyl"); // database
-        const stores = db.collection('store'); // collection
-        const coordinates = { id: 1, latitude: 1, longitude: 1 };
-        const results = await stores
-            .find()
-            .project(coordinates)
-            .toArray();
-        return callback(null, results, client);
+        if(keyword) {
+            const client = await getClient()
+            const db = client.db("finyl"); // database
+            const stores = db.collection('store'); // collection
+            const coordinates = { id: 1, latitude: 1, longitude: 1 };
+            const results = await stores
+                .find({ title: { $regex: new RegExp(keyword, "i") }})
+                .project(coordinates)
+                .toArray();
+            return callback(null, results);
+        } else {
+            const client = await getClient()
+            const db = client.db("finyl"); // database
+            const stores = db.collection('store'); // collection
+            const coordinates = { id: 1, latitude: 1, longitude: 1 };
+            const results = await stores
+                .find()
+                .project(coordinates)
+                .toArray();
+            return callback(null, results);
+        }
+
     } catch (err) {
         console.log(err);
         return callback(err, null);
@@ -48,7 +61,8 @@ router.get('/location', function (req, res) {
 
 
     if (getClient) {
-        locationQuery((err, result, connection) => {
+        const keyword = req.query.keyword
+        locationQuery(keyword,(err, result) => {
             if (err) {
                 console.log('가게 위치 조회 실패');
                 res.send(err);

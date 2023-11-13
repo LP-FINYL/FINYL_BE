@@ -208,14 +208,24 @@ async function StoreEntireInfoQuery(page, limit, callback) {
         const client = await getClient();
         const db = client.db("finyl"); // database
         const stores = db.collection('store'); // collection
+
+        // Calculate total count
+        const total = await stores.countDocuments();
+
+        // Calculate total pages
+        const totalPages = Math.ceil(total / limit);
+
         const cursor = stores.find({}).skip((page - 1) * limit).limit(limit);
         const results = await cursor.toArray();
-        return callback(null, results, client);
+
+        // Include total, totalPages, and page in the callback
+        return callback(null, {results, totalPages});
     } catch (err) {
         console.log(err);
         return callback(err, null);
     }
 }
+
 
 
 
@@ -234,7 +244,9 @@ router.get('/adminStoreEntireInfo', function (req, res) {
                 res.send(err);
             } else if (result) {
                 console.log('가게 전체 정보 조회 성공');
-                res.send(result)
+                res.send({
+                    result: result
+                })
             }
         });
     } else {
