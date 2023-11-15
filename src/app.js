@@ -9,6 +9,7 @@ const session = require('express-session')
 const cors = require('cors')
 const indexRouter = require('./routes/index')
 const adminRouter = require('./routes/admin')
+const authRouter = require('./routes/auth')
 
 
 const multerMid = multer({
@@ -40,6 +41,7 @@ app.use(compression())
 
 app.use('/api/v1', indexRouter)
 app.use('/api/v1/admin', adminRouter)
+app.use('/api/v1/auth', authRouter)
 // app.use('/', indexRouter)
 
 

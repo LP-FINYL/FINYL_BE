@@ -3,9 +3,12 @@ var router = express.Router();
 var template = require('../lib/template.js');
 const {getClient} = require('../controller/mongodb')
 const shortid = require('shortid');
-const { upload } = require("../controller/upload");
+const {upload} = require("../controller/upload");
 const {format} = require("util");
 const {Storage} = require("@google-cloud/storage");
+const jwt = require("jsonwebtoken");
+const secret = require("../controller/config/config");
+const secretKey = secret.secret
 
 // router.get('/', function (request, response) {
 //     var feedback = '';
@@ -56,8 +59,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
 }
 
 
-
-router.post('/adminCreate', function (req, res) {
+router.post('/adminCreate', verifyToken, function (req, res) {
 
     const body = req.body
     const id = shortid.generate()
@@ -113,20 +115,20 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
             }
         };
 
-            const updateResult = stores.findOneAndUpdate(
-                filter,
-                updateDoc
-            );
-            console.log(updateResult)
-            console.log(`데이터 업데이트 성공.\n`);
-            return callback(null, updateResult);
-        } catch (err) {
+        const updateResult = stores.findOneAndUpdate(
+            filter,
+            updateDoc
+        );
+        console.log(updateResult)
+        console.log(`데이터 업데이트 성공.\n`);
+        return callback(null, updateResult);
+    } catch (err) {
         console.error(`데이터 업데이트 실패 ${err}\n`);
         return callback(err, null);
     }
 }
 
-router.post('/adminUpdate', function (req, res) {
+router.post('/adminUpdate', verifyToken, function (req, res) {
     const body = req.body;
     console.log(req.body)
     const id = req.body.id; // 기존 데이터의 ID를 받아옵니다.
@@ -166,7 +168,7 @@ async function deleteData(id, callback) {
     const db = client.db("finyl"); // database
     const stores = db.collection('store'); // collection
 
-    const deleteDoc = { id:id };
+    const deleteDoc = {id: id};
 
     try {
         const deleteManyResult = await stores.deleteMany(deleteDoc);
@@ -180,9 +182,9 @@ async function deleteData(id, callback) {
 
 
 /* /drop post */
-router.post('/adminDelete', (req, res) => {
+router.post('/adminDelete', verifyToken, function (req, res) {
 
-    console.log('회원탈퇴할 ID : ' + id , "Get Delete Process");
+    console.log('회원탈퇴할 ID : ' + id, "Get Delete Process");
 
     var body = req.body;
     var id = body.id;
@@ -227,18 +229,14 @@ async function StoreEntireInfoQuery(page, limit, callback) {
 }
 
 
-
-
-
-
 // 요청 시 디비의 전체 데이터 전달
-router.get('/adminStoreEntireInfo', function (req, res) {
+router.get('/adminStoreEntireInfo', verifyToken, function (req, res) {
 
 
     if (getClient) {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
-        StoreEntireInfoQuery(page, limit,(err, result) => {
+        StoreEntireInfoQuery(page, limit, (err, result) => {
             if (err) {
                 console.log('가게 전체 정보 조회 실패');
                 res.send(err);
@@ -265,7 +263,7 @@ function uuidv4() {
 
 
 // 이미지 업로드 기능
-router.post('/imageUpload', function (req, res, next) {
+router.post('/imageUpload', verifyToken, function (req, res, next) {
 
 
     const {Storage} = require('@google-cloud/storage');
@@ -296,7 +294,7 @@ router.post('/imageUpload', function (req, res, next) {
             } else {
                 console.log(`File ${blob.name} is now public.`)
                 const publicUrl = blob.publicUrl()
-                res.status(200).send({publicUrl : publicUrl});
+                res.status(200).send({publicUrl: publicUrl});
             }
         })
 
@@ -306,9 +304,23 @@ router.post('/imageUpload', function (req, res, next) {
 });
 
 
+function verifyToken(req, res, next) {
+    const token = req.headers['authorization'];
 
+    if (!token) {
+        return res.status(403).json({success: false, message: '토큰이 제공되지 않았습니다.'});
+    }
 
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) {
+            console.error('토큰 검증 에러:', err);
+            return res.status(401).json({success: false, message: '토큰이 유효하지 않습니다.', error: err.message});
+        } else if (decoded.scope === "admin") {
+            next()
+        }
+    });
 
+}
 
 
 module.exports = router;

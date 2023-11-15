@@ -25,13 +25,13 @@ router.get('/', function (req, res) {
 
 async function locationQuery(keyword, callback) {
     try {
-        if(keyword) {
+        if (keyword) {
             const client = await getClient()
             const db = client.db("finyl"); // database
             const stores = db.collection('store'); // collection
-            const coordinates = { id: 1, latitude: 1, longitude: 1 };
+            const coordinates = {id: 1, latitude: 1, longitude: 1};
             const results = await stores
-                .find({ title: { $regex: new RegExp(keyword, "i") }})
+                .find({title: {$regex: new RegExp(keyword, "i")}})
                 .project(coordinates)
                 .toArray();
             return callback(null, results);
@@ -39,7 +39,7 @@ async function locationQuery(keyword, callback) {
             const client = await getClient()
             const db = client.db("finyl"); // database
             const stores = db.collection('store'); // collection
-            const coordinates = { id: 1, latitude: 1, longitude: 1 };
+            const coordinates = {id: 1, latitude: 1, longitude: 1};
             const results = await stores
                 .find()
                 .project(coordinates)
@@ -54,15 +54,13 @@ async function locationQuery(keyword, callback) {
 }
 
 
-
-
-// 요청 시 ID 기준으로 위도 경도 ID 값 전달
+// 요청 시 위도 경도 ID 값 전달
 router.get('/location', function (req, res) {
 
 
     if (getClient) {
         const keyword = req.query.keyword
-        locationQuery(keyword,(err, result) => {
+        locationQuery(keyword, (err, result) => {
             if (err) {
                 console.log('가게 위치 조회 실패');
                 res.send(err);
@@ -114,18 +112,105 @@ async function storeInfoQuery(id, callback) {
 }
 
 
-
 router.get('/storeInfo', function (req, res) {
 
     const id = req.query.id
 
     if (getClient) {
-        storeInfoQuery(id,(err, result) => {
+        storeInfoQuery(id, (err, result) => {
             if (err) {
                 console.log('가게 전체 데이터 조회 실패');
                 res.send(err);
             } else if (result !== null) {
                 console.log('가게 전체 데이터 조회 성공');
+                res.status(200).send(result)
+            }
+        });
+    } else {
+        console.log('데이터베이스 연결 안됨.');
+    }
+});
+
+
+async function searchQuery(keyword, callback) {
+    try {
+        const client = await getClient()
+        const db = client.db("finyl"); // database
+        const stores = db.collection('store'); // collection
+        const coordinates = {id: 1, latitude: 1, longitude: 1, title: 1, image: 1, tags: 1, address: 1};
+        const results = await stores
+            .find({title: {$regex: new RegExp(keyword, "i")}})
+            .project(coordinates)
+            .toArray();
+        return callback(null, results);
+    } catch (err) {
+        console.log(err);
+        return callback(err, null);
+    }
+}
+
+router.get('/search', function (req, res) {
+
+
+    if (getClient) {
+        const keyword = req.query.keyword
+        searchQuery(keyword, (err, result) => {
+            if (err) {
+                console.log('가게 위치 조회 실패');
+                res.send(err);
+            } else if (result) {
+                console.log('가게 위치 조회 성공');
+                res.status(200).send(result)
+            }
+        });
+    } else {
+        console.log('데이터베이스 연결 안됨.');
+    }
+});
+
+
+async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElongitude, callback) {
+    try {
+        const client = await getClient();
+        const db = client.db("finyl"); // 데이터베이스
+        const stores = db.collection('store'); // 컬렉션
+        /*
+        longitude = 경도 = 가로
+        latitude = 위도 = 세로
+        * */
+
+        const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
+
+        const result = await stores.find({
+            latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
+            longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
+        }).project(coordinates).toArray();
+
+        return callback(null, result);
+    } catch (err) {
+        console.log(err);
+        return callback(err, null);
+    }
+}
+
+
+router.get('/locationDirections', function (req, res) {
+
+
+    if (getClient) {
+        const {SWlatitude, SWlongitude, NElatitude, NElongitude} = req.query;
+
+        const parsedNElatitude = Number(NElatitude);
+        const parsedNElongitude = Number(NElongitude);
+        const parsedSWlatitude = Number(SWlatitude);
+        const parsedSWlongitude = Number(SWlongitude);
+
+        locationDirectionsQuery(parsedSWlatitude, parsedSWlongitude, parsedNElatitude, parsedNElongitude, (err, result) => {
+            if (err) {
+                console.log('가게 위치 조회 실패');
+                res.send(err);
+            } else if (result) {
+                console.log('가게 위치 조회 성공');
                 res.status(200).send(result)
             }
         });
