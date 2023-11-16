@@ -85,21 +85,6 @@ router.post('/logout', (req, res) => {
 });
 
 
-// 보호된 라우트 - JWT 검증
-// router.get('/protected', async (req, res) => {
-//     if (getClient) {
-//         const token = req.headers.authorization;
-//         await verifyToken(token, (err, result) => {
-//             if (err) {
-//                 console.log('토큰 검증 실패');
-//                 res.send(err)
-//             } else if (result) {
-//                 console.log('토큰 검증 성공');
-//                 res.send(result);
-//             }
-//         });
-//     }
-// });
 
 
 module.exports = router;
