@@ -26,6 +26,14 @@ router.post('/register', async (req, res) => {
             return res.json({ success: false, message: '이미 존재하는 아이디입니다.' });
         }
 
+        if (!username) {
+            return res.json({ success: false, message: '아이디를 입력해주세요.' });
+        }
+
+        if (!password) {
+            return res.json({ success: false, message: '패스워드를 입력해주세요.' });
+        }
+
         res.json({ success: true, message: '회원가입 성공!' });
     } catch (error) {
         res.status(500).json({ success: false, message: '서버 오류입니다.' });
@@ -53,7 +61,8 @@ router.post('/login', async (req, res) => {
             if (isPasswordValid) {
                 // JWT 토큰 생성
                 const token = jwt.sign(payload, secretKey, { expiresIn: '1h' });
-                res.json({ success: true, message: '로그인 성공!', token });
+                res.cookie('jwt', token, { httpOnly: true, expiresIn: new Date(Date.now() + 1 * 3600000) })
+                res.json({ success: true, message: '로그인 성공!'});
             } else {
                 res.json({ success: false, message: '유저 정보가 일치하지 않습니다.' });
             }
@@ -65,6 +74,16 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ success: false, message: '서버 오류입니다.' });
     }
 });
+
+// 로그아웃 라우트
+router.post('/logout', (req, res) => {
+    // 클라이언트에게 전송된 jwt 쿠키를 삭제
+    res.clearCookie('jwt');
+
+    // 로그아웃 성공 메시지를 반환
+    res.json({ success: true, message: '로그아웃 성공' });
+});
+
 
 // 보호된 라우트 - JWT 검증
 // router.get('/protected', async (req, res) => {

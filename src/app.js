@@ -5,7 +5,7 @@ const compression = require('compression')
 const helmet = require('helmet')
 const app = express()
 const multer = require('multer');
-const session = require('express-session')
+const cookieParser = require('cookie-parser');
 const cors = require('cors')
 const indexRouter = require('./routes/index')
 const adminRouter = require('./routes/admin')
@@ -27,6 +27,7 @@ app.use(express.static('public'))
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(compression())
+app.use(cookieParser());
 
 // var FileStore = require('session-file-store')(session);
 //

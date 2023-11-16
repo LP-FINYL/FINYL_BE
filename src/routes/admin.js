@@ -305,7 +305,8 @@ router.post('/imageUpload', verifyToken, function (req, res, next) {
 
 
 function verifyToken(req, res, next) {
-    const token = req.headers['authorization'];
+
+    const token = req.cookies.jwt
 
     if (!token) {
         return res.status(403).json({success: false, message: '토큰이 제공되지 않았습니다.'});
