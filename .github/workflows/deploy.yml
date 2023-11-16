@@ -17,7 +17,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: finyl               # Updated cluster name
-  GKE_REGION: asia-northeast3     # Updated region
+  GKE_ZONE: asia-northeast3     # Updated region
   DEPLOYMENT_NAME: finyl-backend   # Updated deployment name
   IMAGE: finyl-backend
 
