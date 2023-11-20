@@ -8,65 +8,73 @@ const secretKey = secret.secret
 
 // 회원가입 라우트
 router.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { id, password } = req.body;
 
     try {
-        // 패스워드 해싱
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // MongoDB에 유저 정보 저장
-        const client = await getClient()
-        const db = client.db('finyl'); // 여기에 실제 데이터베이스 이름을 넣어주세요
-        const accounts = db.collection('account');
-        await accounts.insertOne({ username, password: hashedPassword });
-        const existingUser = await accounts.findOne({ username });
-
-        if (existingUser) {
-            // 중복 아이디가 이미 존재하는 경우
-            return res.json({ success: false, message: '이미 존재하는 아이디입니다.' });
-        }
-
-        if (!username) {
+        if (!id) {
+            console.log("아이디 미입력")
             return res.json({ success: false, message: '아이디를 입력해주세요.' });
         }
 
         if (!password) {
+            console.log("패스워드 미입력")
             return res.json({ success: false, message: '패스워드를 입력해주세요.' });
         }
 
+        // MongoDB에서 유저 정보 찾기
+        const client = await getClient()
+        const db = client.db('finyl');
+        const accounts = db.collection('account');
+        const existingUser = await accounts.findOne({ id: id });
+
+        if (existingUser) {
+            // 중복 아이디가 이미 존재하는 경우
+            console.log("중복 아이디")
+            return res.json({ success: false, message: '이미 존재하는 아이디입니다.' });
+        }
+
+        // 패스워드 해싱
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // MongoDB에 유저 정보 저장
+        await accounts.insertOne({ id, password: hashedPassword });
+
+        console.log("회원가입 성공")
         res.json({ success: true, message: '회원가입 성공!' });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ success: false, message: '서버 오류입니다.' });
     }
 });
 
+
 // 로그인 라우트
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    const { id, password } = req.body;
 
     try {
         const client = await getClient()
         const db = client.db('finyl'); // 여기에 실제 데이터베이스 이름을 넣어주세요
         const accounts = db.collection('account');
 
-        const user = await accounts.findOne({ username });
-
-        console.log(username)
+        const user = await accounts.findOne({ id });
 
         if (user) {
             // 패스워드 비교
             const isPasswordValid = await bcrypt.compare(password, user.password);
-            const payload = { username: user.username,  scope: "admin" };
+            const payload = { id: user.id,  scope: "admin" };
 
             if (isPasswordValid) {
                 // JWT 토큰 생성
                 const token = jwt.sign(payload, secretKey, { expiresIn: '1h' });
-                res.cookie('jwt', token, { httpOnly: true, expiresIn: new Date(Date.now() + 1 * 3600000) })
-                res.json({ success: true, message: '로그인 성공!'});
+                console.log("로그인 성공")
+                res.json({ success: true, message: '로그인 성공!', token : token});
             } else {
+                console.log("유저 정보가 일치하지 않습니다")
                 res.json({ success: false, message: '유저 정보가 일치하지 않습니다.' });
             }
         } else {
+            console.log("유저 정보가 일치하지 않습니다")
             res.json({ success: false, message: '유저 정보가 일치하지 않습니다.' });
         }
     } catch (error) {
@@ -77,10 +85,6 @@ router.post('/login', async (req, res) => {
 
 // 로그아웃 라우트
 router.post('/logout', (req, res) => {
-    // 클라이언트에게 전송된 jwt 쿠키를 삭제
-    res.clearCookie('jwt');
-
-    // 로그아웃 성공 메시지를 반환
     res.json({ success: true, message: '로그아웃 성공' });
 });
 

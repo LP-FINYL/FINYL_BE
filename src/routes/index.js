@@ -23,56 +23,56 @@ router.get('/', function (req, res) {
 });
 
 
-async function locationQuery(keyword, callback) {
-    try {
-        if (keyword) {
-            const client = await getClient()
-            const db = client.db("finyl"); // database
-            const stores = db.collection('store'); // collection
-            const coordinates = {id: 1, latitude: 1, longitude: 1};
-            const results = await stores
-                .find({title: {$regex: new RegExp(keyword, "i")}})
-                .project(coordinates)
-                .toArray();
-            return callback(null, results);
-        } else {
-            const client = await getClient()
-            const db = client.db("finyl"); // database
-            const stores = db.collection('store'); // collection
-            const coordinates = {id: 1, latitude: 1, longitude: 1};
-            const results = await stores
-                .find()
-                .project(coordinates)
-                .toArray();
-            return callback(null, results);
-        }
-
-    } catch (err) {
-        console.log(err);
-        return callback(err, null);
-    }
-}
-
-
-// 요청 시 위도 경도 ID 값 전달
-router.get('/location', function (req, res) {
-
-
-    if (getClient) {
-        const keyword = req.query.keyword
-        locationQuery(keyword, (err, result) => {
-            if (err) {
-                console.log('가게 위치 조회 실패');
-                res.send(err);
-            } else if (result) {
-                console.log('가게 위치 조회 성공');
-                res.status(200).send(result)
-            }
-        });
-    } else {
-        console.log('데이터베이스 연결 안됨.');
-    }
-});
+// async function locationQuery(keyword, callback) {
+//     try {
+//         if (keyword) {
+//             const client = await getClient()
+//             const db = client.db("finyl"); // database
+//             const stores = db.collection('store'); // collection
+//             const coordinates = {id: 1, latitude: 1, longitude: 1};
+//             const results = await stores
+//                 .find({title: {$regex: new RegExp(keyword, "i")}})
+//                 .project(coordinates)
+//                 .toArray();
+//             return callback(null, results);
+//         } else {
+//             const client = await getClient()
+//             const db = client.db("finyl"); // database
+//             const stores = db.collection('store'); // collection
+//             const coordinates = {id: 1, latitude: 1, longitude: 1};
+//             const results = await stores
+//                 .find()
+//                 .project(coordinates)
+//                 .toArray();
+//             return callback(null, results);
+//         }
+//
+//     } catch (err) {
+//         console.log(err);
+//         return callback(err, null);
+//     }
+// }
+//
+//
+// // 요청 시 위도 경도 ID 값 전달
+// router.get('/location', function (req, res) {
+//
+//
+//     if (getClient) {
+//         const keyword = req.query.keyword
+//         locationQuery(keyword, (err, result) => {
+//             if (err) {
+//                 console.log('가게 위치 조회 실패');
+//                 res.send(err);
+//             } else if (result) {
+//                 console.log('가게 위치 조회 성공');
+//                 res.status(200).send(result)
+//             }
+//         });
+//     } else {
+//         console.log('데이터베이스 연결 안됨.');
+//     }
+// });
 
 
 async function storeInfoQuery(id, callback) {
@@ -132,17 +132,33 @@ router.get('/storeInfo', function (req, res) {
 });
 
 
-async function searchQuery(keyword, callback) {
+async function searchQuery(keyword, address, tags, callback) {
     try {
         const client = await getClient()
         const db = client.db("finyl"); // database
         const stores = db.collection('store'); // collection
         const coordinates = {id: 1, latitude: 1, longitude: 1, title: 1, image: 1, tags: 1, address: 1};
+
         const results = await stores
-            .find({title: {$regex: new RegExp(keyword, "i")}})
+            .find({
+                $and: [
+                    { title: { $regex: new RegExp(keyword, "i") } },
+                    { address: { $regex: new RegExp(address, "i") } },
+                    { tags: { $regex: new RegExp(tags, "i") } },
+                    {
+                        $and: [
+                            { title: { $regex: new RegExp(keyword, "i") } },
+                            { address: { $regex: new RegExp(address, "i") } },
+                        ],
+                    },
+                ],
+            })
             .project(coordinates)
             .toArray();
-        return callback(null, results);
+
+        callback(null, results)
+
+
     } catch (err) {
         console.log(err);
         return callback(err, null);
@@ -154,12 +170,14 @@ router.get('/search', function (req, res) {
 
     if (getClient) {
         const keyword = req.query.keyword
-        searchQuery(keyword, (err, result) => {
+        const address = req.query.address
+        const tags = req.query.tags
+        searchQuery(keyword, address, tags, (err, result) => {
             if (err) {
-                console.log('가게 위치 조회 실패');
+                console.log('가게 위치 검색 실패');
                 res.send(err);
             } else if (result) {
-                console.log('가게 위치 조회 성공');
+                console.log('가게 위치 검색 성공');
                 res.status(200).send(result)
             }
         });

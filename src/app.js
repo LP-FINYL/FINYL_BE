@@ -21,13 +21,12 @@ const multerMid = multer({
 })
 
 app.use(helmet())
-app.use(cors())
+app.use(cors());
 app.use(multerMid.single('file'))
 app.use(express.static('public'))
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(compression())
-app.use(cookieParser());
 
 // var FileStore = require('session-file-store')(session);
 //
@@ -38,7 +37,6 @@ app.use(cookieParser());
 //     cookie : { secure : false, maxAge : (4 * 60 * 60 * 1000) },
 //     store: new FileStore()
 // }));
-
 
 app.use('/api/v1', indexRouter)
 app.use('/api/v1/admin', adminRouter)
@@ -51,16 +49,16 @@ app.get('/', function (req, res) {
 });
 
 
-app.use(function (req, res, next){
-    res.status(404).send('server error')
-})
+// 404 에러 핸들링 미들웨어
+app.use(function(req, res, next) {
+    res.status(404).send('Not Found');
+});
 
-app.use((err, req, res, next) => {
-    res.status(500).json({
-        error: err,
-        message: 'Internal server error!',
-    })
-})
+// 에러 핸들링 미들웨어
+app.use(function(err, req, res, next) {
+    console.error(err.stack);
+    res.status(500).send('Internal Server Error');
+});
 
 
 const port = 3000
