@@ -263,7 +263,7 @@ function uuidv4() {
 
 
 // 이미지 업로드 기능
-router.post('/imageUpload', verifyToken, function (req, res, next) {
+router.post('/imageUpload', function (req, res, next) {
 
 
     const {Storage} = require('@google-cloud/storage');

@@ -19,7 +19,7 @@ const shortid = require('shortid');
 // });
 
 router.get('/', function (req, res) {
-    res.status(200)
+    res.status(200).send('OK')
 });
 
 
