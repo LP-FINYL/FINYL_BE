@@ -8,7 +8,6 @@ const storage = new Storage({
     projectId: readNamespacedSecret.project_id,
 })
 
-// const secret = 'ZzjitJpVqtjGcdPlOVwRzWxoeaeLHJGKGyInxsmjlWxvJHMQCB'
 const secret = process.env.secret
 
 
