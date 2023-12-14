@@ -40,6 +40,11 @@ spec:
                 secretKeyRef:
                   name: account-secret
                   key: mongodb_url
+            - name: secret
+              valueFrom:
+                secretKeyRef:
+                  name: account-secret
+                  key: secret
           resources:
             limits:
               cpu: 500m

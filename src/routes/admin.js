@@ -1,11 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var template = require('../lib/template.js');
 const {getClient} = require('../controller/mongodb')
 const shortid = require('shortid');
-const {upload} = require("../controller/upload");
-const {format} = require("util");
-const {Storage} = require("@google-cloud/storage");
 const jwt = require("jsonwebtoken");
 const secret = require("../controller/config/config");
 const secretKey = secret.secret
@@ -38,7 +34,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
         const storeData = stores.insertMany([{
             id: id,
             title: title,
-            tags: tags,
+            tags: [tags],
             address: address,
             site: site,
             instaUrl: instaUrl,
@@ -102,7 +98,7 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
         const updateDoc = {
             $set: {
                 title: title,
-                tags: tags,
+                tags: [tags],
                 address: address,
                 site: site,
                 instaUrl: instaUrl,
