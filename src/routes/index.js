@@ -3,77 +3,115 @@ var router = express.Router();
 var template = require('../lib/template.js');
 const {getClient} = require('../controller/mongodb')
 const shortid = require('shortid');
+const {Kafka, Partitioners} = require('kafkajs')
+const kafka = new Kafka({
+    clientId: 'finyl',
+    brokers: ['localhost:9092'],
+    //brokers: ['finyl-kafka-controller-0.finyl-kafka-controller-headless:9092','finyl-kafka-controller-1.finyl-kafka-controller-headless:9092','finyl-kafka-controller-2.finyl-kafka-controller-headless:9092'],
+    // sasl: {
+    //     mechanism: 'plain',
+    //     // username: process.env.kafka_username,
+    //     // password: process.env.kafka_password,
+    //     username: "finyl-admin",
+    //     password: "finyl-password"
+    // }
+})
 
-// router.get('/', function (request, response) {
-//     var feedback = '';
-//     var title = 'Welcome';
-//     var description = 'Hello, Node.js';
-//     var html = template.html(title,
-//         `
-//       <div style="color:green">${feedback}</div>
-//       <h2>${title}</h2>${description}
-//       `,
-//         ``
-//     );
-//     response.send(html);
-// });
 
 router.get('/', function (req, res) {
     res.status(200).send('OK')
 });
 
 
-// async function locationQuery(keyword, callback) {
+// async function consumer(callback) {
+//     const consumer = kafka.consumer({groupId: 'finyl-locaiton-group'});
+//     await consumer.connect()
+//     console.log('Connected to Kafka')
+//
+//     await consumer.subscribe({topic: 'finyl-location', fromBeginning: true});
+//
+//     await consumer.run({
+//         eachMessage: async ({topic, partition, message}) => {
+//             const messageString = message.value.toString();
+//             const result = JSON.parse(messageString);
+//             callback(null, messageString)
+//         }
+//     });
+// }
+//
+// async function PushQuery(parsedNElatitude, parsedNElongitude, parsedSWlatitude, parsedSWlongitude, callback) {
 //     try {
-//         if (keyword) {
-//             const client = await getClient()
-//             const db = client.db("finyl"); // database
-//             const stores = db.collection('store'); // collection
-//             const coordinates = {id: 1, latitude: 1, longitude: 1};
-//             const results = await stores
-//                 .find({title: {$regex: new RegExp(keyword, "i")}})
-//                 .project(coordinates)
-//                 .toArray();
-//             return callback(null, results);
-//         } else {
-//             const client = await getClient()
-//             const db = client.db("finyl"); // database
-//             const stores = db.collection('store'); // collection
-//             const coordinates = {id: 1, latitude: 1, longitude: 1};
-//             const results = await stores
-//                 .find()
-//                 .project(coordinates)
-//                 .toArray();
-//             return callback(null, results);
+//
+//         const producer = kafka.producer({createPartitioner: Partitioners.LegacyPartitioner})
+//
+//         var sendMessage = async () => {
+//             await producer.connect()
+//             await producer.send({
+//                 topic: 'finyl-location',
+//                 messages: [
+//                     {
+//                         value: JSON.stringify({
+//                             parsedNElatitude: parsedNElatitude,
+//                             parsedNElongitude: parsedNElongitude,
+//                             parsedSWlatitude: parsedSWlatitude,
+//                             parsedSWlongitude: parsedSWlongitude
+//                         }),
+//                     },
+//                 ],
+//             })
+//
+//             await producer.disconnect()
+//             console.log('카프카 데이터 전송 후 연결 종료')
 //         }
 //
+//         sendMessage();
+//
+//         await callback(null, 'ok')
+//
 //     } catch (err) {
-//         console.log(err);
-//         return callback(err, null);
+//         console.error(err);
+//         callback(err, null);
 //     }
 // }
 //
+// router.get('/events', async (req, res) => {
+//     const {SWlatitude, SWlongitude, NElatitude, NElongitude} = req.query;
+//     const parsedNElatitude = Number(NElatitude);
+//     const parsedNElongitude = Number(NElongitude);
+//     const parsedSWlatitude = Number(SWlatitude);
+//     const parsedSWlongitude = Number(SWlongitude);
 //
-// // 요청 시 위도 경도 ID 값 전달
-// router.get('/location', function (req, res) {
-//
-//
-//     if (getClient) {
-//         const keyword = req.query.keyword
-//         locationQuery(keyword, (err, result) => {
+//     try {
+//         // Push data to Kafka
+//         await PushQuery(parsedNElatitude, parsedNElongitude, parsedSWlatitude, parsedSWlongitude, (err, result) => {
 //             if (err) {
-//                 console.log('가게 위치 조회 실패');
-//                 res.send(err);
-//             } else if (result) {
-//                 console.log('가게 위치 조회 성공');
-//                 res.status(200).send(result)
+//                 console.log(err)
+//             } else {
+//                 console.log(result)
 //             }
 //         });
-//     } else {
-//         console.log('데이터베이스 연결 안됨.');
+//     } catch (pushError) {
+//         console.error('Kafka 데이터 전송 실패', pushError);
+//         res.status(500).send(pushError.message);
+//         return;
+//     }
+//
+//     try {
+//         // Consume data from Kafka
+//         const result = await consumer((err, result) => {
+//            if(err) {
+//                console.log(err)
+//                res.send(err)
+//            }  else if (result) {
+//                // Process the result and send the appropriate response
+//                res.status(200).send(result);
+//            }
+//         });
+//     } catch (consumeError) {
+//         console.error('Kafka 데이터 컨슘 실패', consumeError);
+//         res.status(500).send(consumeError.message);
 //     }
 // });
-
 
 async function storeInfoQuery(id, callback) {
     try {
@@ -142,13 +180,13 @@ async function searchQuery(keyword, address, tags, callback) {
         const results = await stores
             .find({
                 $and: [
-                    { title: { $regex: new RegExp(keyword, "i") } },
-                    { address: { $regex: new RegExp(address, "i") } },
-                    { tags: { $regex: new RegExp(tags, "i") } },
+                    {title: {$regex: new RegExp(keyword, "i")}},
+                    {address: {$regex: new RegExp(address, "i")}},
+                    {tags: {$regex: new RegExp(tags, "i")}},
                     {
                         $and: [
-                            { title: { $regex: new RegExp(keyword, "i") } },
-                            { address: { $regex: new RegExp(address, "i") } },
+                            {title: {$regex: new RegExp(keyword, "i")}},
+                            {address: {$regex: new RegExp(address, "i")}},
                         ],
                     },
                 ],
@@ -187,7 +225,7 @@ router.get('/search', function (req, res) {
 });
 
 
-async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElongitude, callback) {
+async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElongitude, tags, callback) {
     try {
         const client = await getClient();
         const db = client.db("finyl"); // 데이터베이스
@@ -204,6 +242,31 @@ async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElo
             longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
         }).project(coordinates).toArray();
 
+        if (tags) {
+            const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
+
+            const result = await stores.find({
+                $and: [
+                    {
+                        latitude: { $gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude) },
+                    },
+                    {
+                        longitude: { $gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude) },
+                    },
+                    {
+                        tags: { $in: tags }
+                    }
+                ]
+            }).project(coordinates).toArray();
+
+            // const result = await stores.find({
+            //     tags: { $in: tags }
+            // }).project(coordinates).toArray()
+
+
+            return callback(null, result);
+        }
+
         return callback(null, result);
     } catch (err) {
         console.log(err);
@@ -218,12 +281,16 @@ router.get('/locationDirections', function (req, res) {
     if (getClient) {
         const {SWlatitude, SWlongitude, NElatitude, NElongitude} = req.query;
 
+        const tagsParam = req.query.tags;
+        //
+        const tags = req.query.tags ? req.query.tags.split(',') : [];
+
         const parsedNElatitude = Number(NElatitude);
         const parsedNElongitude = Number(NElongitude);
         const parsedSWlatitude = Number(SWlatitude);
         const parsedSWlongitude = Number(SWlongitude);
 
-        locationDirectionsQuery(parsedSWlatitude, parsedSWlongitude, parsedNElatitude, parsedNElongitude, (err, result) => {
+        locationDirectionsQuery(parsedSWlatitude, parsedSWlongitude, parsedNElatitude, parsedNElongitude, tags, (err, result) => {
             if (err) {
                 console.log('가게 위치 조회 실패');
                 res.send(err);

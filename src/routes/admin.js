@@ -34,7 +34,7 @@ async function addStore(id, title, tags, address, site, instaUrl, operatorTime, 
         const storeData = stores.insertMany([{
             id: id,
             title: title,
-            tags: [tags],
+            tags: tags,
             address: address,
             site: site,
             instaUrl: instaUrl,
