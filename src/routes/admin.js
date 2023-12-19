@@ -98,7 +98,7 @@ async function updateStore(id, title, tags, address, site, instaUrl, operatorTim
         const updateDoc = {
             $set: {
                 title: title,
-                tags: [tags],
+                tags: tags,
                 address: address,
                 site: site,
                 instaUrl: instaUrl,
