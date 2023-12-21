@@ -182,7 +182,7 @@ async function searchQuery(keyword, address, tags, callback) {
                 $and: [
                     {title: {$regex: new RegExp(keyword, "i")}},
                     {address: {$regex: new RegExp(address, "i")}},
-                    {tags: {$regex: new RegExp(tags, "i")}},
+                    {tags: {$in: tags}},
                     {
                         $and: [
                             {title: {$regex: new RegExp(keyword, "i")}},
@@ -237,39 +237,55 @@ async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElo
 
         const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
 
-        if (tags) {
-            const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
+        const queryConditions = [
+            {
+                latitude: { $gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude) },
+                longitude: { $gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude) },
+            }
+        ];
 
-            const result = await stores.find({
-                $and: [
-                    {
-                        latitude: { $gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude) },
-                    },
-                    {
-                        longitude: { $gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude) },
-                    },
-                    {
-                        tags: { $in: tags }
-                    }
-                ]
-            }).project(coordinates).toArray();
-
-            // const result = await stores.find({
-            //     tags: { $in: tags }
-            // }).project(coordinates).toArray()
-
-
-            return callback(null, result);
-        } else {
-
-            const result = await stores.find({
-                latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
-                longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
-            }).project(coordinates).toArray();
-
-
-            return callback(null, result);
+        if (tags && tags.length > 0) {
+            queryConditions.push({ tags: { $in: tags } });
         }
+
+        const result = await stores.find({
+            $and: queryConditions
+        }).project(coordinates).toArray();
+
+        return callback(null, result);
+
+        // if (tags) {
+        //
+        //     const result = await stores.find({
+        //         $and: [
+        //             {
+        //                 latitude: { $gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude) },
+        //             },
+        //             {
+        //                 longitude: { $gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude) },
+        //             },
+        //             {
+        //                 tags: { $in: tags }
+        //             }
+        //         ]
+        //     }).project(coordinates).toArray();
+        //
+        //     // const result = await stores.find({
+        //     //     tags: { $in: tags }
+        //     // }).project(coordinates).toArray()
+        //
+        //
+        //     return callback(null, result);
+        // } else {
+        //
+        //     const result = await stores.find({
+        //         latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
+        //         longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
+        //     }).project(coordinates).toArray();
+        //
+        //
+        //     return callback(null, result);
+        // }
 
 
     } catch (err) {
