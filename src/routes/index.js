@@ -182,7 +182,7 @@ async function searchQuery(keyword, address, tags, callback) {
                 $and: [
                     {title: {$regex: new RegExp(keyword, "i")}},
                     {address: {$regex: new RegExp(address, "i")}},
-                    {tags: {$in: tags}},
+                    {tags: {$regex: new RegExp(tags, "i")}},
                     {
                         $and: [
                             {title: {$regex: new RegExp(keyword, "i")}},
