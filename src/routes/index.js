@@ -237,11 +237,6 @@ async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElo
 
         const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
 
-        const result = await stores.find({
-            latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
-            longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
-        }).project(coordinates).toArray();
-
         if (tags) {
             const coordinates = {id: 1, title: 1, latitude: 1, longitude: 1, info: 1, tags: 1, image: 1};
 
@@ -265,9 +260,18 @@ async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElo
 
 
             return callback(null, result);
+        } else {
+
+            const result = await stores.find({
+                latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
+                longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
+            }).project(coordinates).toArray();
+
+
+            return callback(null, result);
         }
 
-        return callback(null, result);
+
     } catch (err) {
         console.log(err);
         return callback(err, null);
