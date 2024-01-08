@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: finyl-backend-sa
       containers:
-        - image: asia-northeast3-docker.pkg.dev/root-augury-403911/finyl-be/finyl-backend:latest
+        - image: asia-northeast3-docker.pkg.dev/notional-gist-410602/finyl-backend/finyl-backend:latest
           imagePullPolicy: Always
           name: finyl-backend
           ports:

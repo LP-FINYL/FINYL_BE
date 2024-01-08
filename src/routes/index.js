@@ -176,13 +176,11 @@ async function searchQuery(keyword, address, tags, callback) {
         const db = client.db("finyl"); // database
         const stores = db.collection('store'); // collection
         const coordinates = {id: 1, latitude: 1, longitude: 1, title: 1, image: 1, tags: 1, address: 1};
-
         const results = await stores
             .find({
                 $and: [
                     {title: {$regex: new RegExp(keyword, "i")}},
                     {address: {$regex: new RegExp(address, "i")}},
-                    {tags: {$regex: new RegExp(tags, "i")}},
                     {
                         $and: [
                             {title: {$regex: new RegExp(keyword, "i")}},
@@ -190,6 +188,9 @@ async function searchQuery(keyword, address, tags, callback) {
                         ],
                     },
                 ],
+                $or: [
+                    {tags: {$in: tags}},
+                ]
             })
             .project(coordinates)
             .toArray();
@@ -209,7 +210,7 @@ router.get('/search', function (req, res) {
     if (getClient) {
         const keyword = req.query.keyword
         const address = req.query.address
-        const tags = req.query.tags
+        const tags = req.query.tags ? req.query.tags.split(',') : [];
         searchQuery(keyword, address, tags, (err, result) => {
             if (err) {
                 console.log('가게 위치 검색 실패');
@@ -254,39 +255,6 @@ async function locationDirectionsQuery(SWlatitude, SWlongitude, NElatitude, NElo
 
         return callback(null, result);
 
-        // if (tags) {
-        //
-        //     const result = await stores.find({
-        //         $and: [
-        //             {
-        //                 latitude: { $gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude) },
-        //             },
-        //             {
-        //                 longitude: { $gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude) },
-        //             },
-        //             {
-        //                 tags: { $in: tags }
-        //             }
-        //         ]
-        //     }).project(coordinates).toArray();
-        //
-        //     // const result = await stores.find({
-        //     //     tags: { $in: tags }
-        //     // }).project(coordinates).toArray()
-        //
-        //
-        //     return callback(null, result);
-        // } else {
-        //
-        //     const result = await stores.find({
-        //         latitude: {$gte: parseFloat(SWlatitude), $lte: parseFloat(NElatitude)},
-        //         longitude: {$gte: parseFloat(SWlongitude), $lte: parseFloat(NElongitude)},
-        //     }).project(coordinates).toArray();
-        //
-        //
-        //     return callback(null, result);
-        // }
-
 
     } catch (err) {
         console.log(err);
@@ -301,8 +269,6 @@ router.get('/locationDirections', function (req, res) {
     if (getClient) {
         const {SWlatitude, SWlongitude, NElatitude, NElongitude} = req.query;
 
-        const tagsParam = req.query.tags;
-        //
         const tags = req.query.tags ? req.query.tags.split(',') : [];
 
         const parsedNElatitude = Number(NElatitude);

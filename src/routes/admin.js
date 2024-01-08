@@ -264,7 +264,7 @@ router.post('/imageUpload', function (req, res, next) {
 
     const {Storage} = require('@google-cloud/storage');
     const storage = new Storage();
-    const bucket = storage.bucket('finyl');
+    const bucket = storage.bucket('finyl-storage');
     const postid = uuidv4();
 
     if (!req.file) {
