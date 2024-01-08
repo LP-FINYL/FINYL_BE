@@ -19,10 +19,10 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GAR_LOCATION: asia-northeast3 # TODO: update region of the Artifact Registry
-  GKE_CLUSTER: finyl    # TODO: update to cluster name
-  GKE_ZONE: asia-northeast3  # TODO: update to cluster zone
+  GKE_CLUSTER: finyl-cluster    # TODO: update to cluster name
+  GKE_ZONE: asia-northeast3-c  # TODO: update to cluster zone
   DEPLOYMENT_NAME: finyl-backend # TODO: update to deployment name
-  REPOSITORY: finyl-be # TODO: update to Artifact Registry docker repository
+  REPOSITORY: finyl-backend # TODO: update to Artifact Registry docker repository
   IMAGE: finyl-backend
 
 jobs:
