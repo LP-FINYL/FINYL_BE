@@ -45,13 +45,6 @@ spec:
                 secretKeyRef:
                   name: account-secret
                   key: secret
-          resources:
-            limits:
-              cpu: 500m
-              memory: 2Gi
-            requests:
-              cpu: 500m
-              memory: 2Gi
           securityContext:
             capabilities:
               drop:
